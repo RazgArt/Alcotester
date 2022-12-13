@@ -1,4 +1,5 @@
 """  Tasks: подключить модуль time чтобы была точка отсчета даты и времени
+            использовать BMI
      # 6 Сниженное количество фермента алкогольдегидрогеназа – есть люди, у которых он полностью отсутствует, тогда их будет валить с ног даже глоток вина
      #  Отсутствие закуски – чем жирнее пища, тем медленнее человек пьянеет: кто закусывает огурцами или кусочком лайма, гарантировано будут пьянее любителей хорошо поесть.
      # 4 Телосложение – жировая прослойка частично впитывает алкоголь, и люди с лишним весом пьянеют медленнее стройных, однако и похмелье у них длится дольше.
@@ -30,47 +31,51 @@ class Alcogolik:
         4: "VII стадия.\nДвижение зрачков, как и сердцибиение с дыханием неконтролируемые. Чаще всего \
 отсутствие сознания и абсолютно неконтролируемое поведение. Велика вероятность смерти"
     }
+    import time
 
     def __init__(self, speed_drinking=None, count_ferment=None):
         sex = {"1": 0.55, "2": 0.68}
-        self.sex = sex[input("Enter your sex. If you woman input 1, man - 2 ").strip()]
+        self.sex = sex[input("Enter your sex. If you are a woman input 1, a man - 2 ").strip()]
         self.age = input("Enter your age: ").strip()
         self.weight = int(input("Enter your weight: ").strip())
         self.height = int(input("Enter your height: ").strip())
-        self.body_type = self.BMI(self.weight, self.height)
+        self.body_type = self.__bmi(self.weight, self.height)
         self.count_ferment = count_ferment  # input("Enter your enzyme number (if you don't know, then skip): ").strip()
         self.speed_drinking = speed_drinking
         self.inside = {"drinks": {}, "foods": {}}
         self.count_aib = 0  # free alco in blood
 
-    def drink(self, alco, turnovers, gramm):
-        self.inside["drinks"][alco] = turnovers
-        self._clean_alco_in_blood(turnovers, gramm)
+    def drink(self) -> dict:
+        self.alco = input("Enter the name of alco: ")
+        self.turnovers = int(input("Enter the number turnovers of alco: "))
+        self.gramm = int(input("Enter the number gramm alco: "))
+        self.inside["drinks"][self.alco] = self.turnovers
+        self.__clean_alco_in_blood(self.turnovers, self.gramm)
         return self.inside
 
-    def eat_food(self, snack, fats):
-        self.inside["foods"][snack] = fats
+    # def eat_food(self, snack, fats):
+    #     self.inside["foods"][snack] = fats
 
-    def _clean_alco_in_blood(self, turnovers, gramm):
-        aib = (gramm * (turnovers * self.sex) / 100)  # расчет выпитого чистого алкоголя попавшего в кровь
-        free_aib = aib - (aib * 10 / 100)  # расчет выпитого чистого алкоголя попавшего в кровь без 10% рассосавшихся
-        f_Vidmarka = round(free_aib / (self.weight * 0.7), 2)
-        print(f"{f_Vidmarka} промилли")
+    def __clean_alco_in_blood(self, turnovers: int, gram: int) -> str:
+        aib = (gram * (turnovers * self.sex) / 100)  # расчет выпитого чистого алкоголя попавшего в кровь
+        clear_aib = aib - (aib * 10 / 100)  # расчет выпитого чистого алкоголя попавшего в кровь без 10% рассосавшихся
+        f_Vidmarka = round(clear_aib / (self.weight * 0.7), 2)
         self.count_aib += f_Vidmarka
+        return f"{f_Vidmarka} ppm"
 
     def info(self):
         print(
             f"""Sex: {self.sex}
-Age: {self.age}
-Body_type: {self.body_type}
-Speed_drink{self.speed_drinking}
-Count_ferment: {self.count_ferment}
-Inside: {self.inside}
-Promille: {self.count_aib}"""
+                Age: {self.age}
+                Body_type: {self.body_type}
+                Speed_drink{self.speed_drinking}
+                Count_ferment: {self.count_ferment}
+                Inside: {self.inside}  
+                Promille: {self.count_aib}"""
+            # переделать Inside: {'drinks': {'asa': 20}, 'foods': {}} может быть загнать в список и с помощью Join вытаскивать 2 списка один слов другой значений и с помощью zip
         )
 
-
-    def BMI(self,weight, height):  # Body mass index
+    def __bmi(self, weight: int, height: int) -> str:  # Body mass index
         categ = {"Critical less weight": 16.5,
                  "Less weight": 18.4,
                  "Normal weight": 24.9,
@@ -79,45 +84,45 @@ Promille: {self.count_aib}"""
                  "Fat II": 40,
                  "Fat III": 40.01}
 
-        ind = weight / ((height ** 2) / (10**3))
+        ind = weight / ((height ** 2) / (10 ** 3))
         for value in categ:
             if ind <= categ[value]:
                 return categ[value]
 
-
-    def rezult(self):
-        for i, base_promille in enumerate(self.stadii_drinking.keys()):
+    def result(self):
+        for i, base_ppm in enumerate(self.stadii_drinking.keys()):
             try:
-                if base_promille < self.count_aib < list(self.stadii_drinking.keys())[i + 1]:
-                    print(self.stadii_drinking[base_promille])
+                if base_ppm < self.count_aib < list(self.stadii_drinking.keys())[i + 1]:
+                    print(self.stadii_drinking[base_ppm])
                     break
             except IndexError:
-                print(self.stadii_drinking[base_promille])
+                print(self.stadii_drinking[base_ppm])
 
         print(
             f"{(self.count_aib // 0.15)} hours {round((self.count_aib % 0.15), 2) * 60 / 0.15} minutes untill normal ")
+        # print(time.ctime((time.time() + self.count_aib))) подставить и проверить !!!!!!!!!!!!!!!!!!!!!!!!
 
 
 def main():
     individ = Alcogolik()
     while True:
-        var = input("Enter the number:\n"
-                    "1-drink\n"
-                    "2-eat_food\n"
-                    "3-info\n"
-                    "q-end_programm\n").strip()
-        if var == "1":
-            individ.drink(input("Enter the name of alco: "), int(input("Enter the number turnovers of alco: ")),
-                          int(input("Enter the number gramm alco: ")))
-        elif var == "2":
-            #individ.eat_food(input("Enter the name of food: "), input("Enter the number fats of food: "))
-            pass
-        elif var == "3":
-            individ.info()
-        elif var == "q":
-            individ.rezult()
+        action_option = input("Enter the number:\n"
+                              "1-drink\n"
+                              "2-eat_food\n"
+                              "3-info\n"
+                              "q-end_programm\n").strip()
+
+        info_alco = {"1": individ.drink,
+                     "2": "",
+                     # individ.eat_food(input("Enter the name of food: "),  input("Enter the number fats of food: "))
+                     "3": individ.info,
+                     "q": individ.result
+                     }
+        info_alco.get(action_option)()
+        if action_option == "q":
             break
-    input("Enter the any key: ")
+
 
 if __name__ == "__main__":
     main()
+    input("Enter the any key: ")
